@@ -91,9 +91,9 @@ choosePersona();
       class="input"
       placeholder="Ask me a question or take a guess..."
       v-model="content"
+      autofocus
       @keyup.enter="handleUserInput"
     />
-    <button @click="handleUserInput">Send</button>
   </div>
 
 </template>
@@ -119,6 +119,7 @@ color: white;
 border: none;
 width: 30vw;
 margin: 0 auto;
+height: 2rem;
 }
 
 .input::placeholder{
@@ -151,7 +152,10 @@ color: #d0cece;
 
 
 button {
-  padding: 1px 5px;
+  height: 2rem;
+  background: none;
+  border: 1px solid #f4f4f4;
+  color: #f4f4f4;
 }
 
 p, h1{
