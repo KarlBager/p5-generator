@@ -137,6 +137,12 @@ export async function createCompletionsChat(prompt, systemPrompt = '') {
 
 
 
+
+
+
+
+
+
   export async function createInitialCompletionsChat(prompt, systemPrompt = '') {
     const res = { value: '' }; // Response object to hold API result
     try {
@@ -190,5 +196,8 @@ export async function createCompletionsChat(prompt, systemPrompt = '') {
     
     return res; // Return the response object
   }
+  
+
+
   
 
