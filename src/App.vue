@@ -2,10 +2,8 @@
 import { createCompletionsChat } from './text.js';
 import { getRandomInt } from './text.js';
 
-
 const content = ref('');
 const chatHistory = ref([]);
-const persona = ref(''); // To store the selected persona
 const systemPrompt = `You are a skilled creative coder that gets a keyword or sentence and has to come up with some P5-code for a sketch, that relates to the keyword or sentence. This is the existing code, and you have to fill in the draw function as shown: 
 
 const sketch = (p) => {
@@ -36,11 +34,9 @@ let p5Instance = null;
 
 
 
-
-
 function generateSketch(sketchCode){
 
-console.log(sketchCode);
+//console.log(sketchCode);
 
 sketchCode = sketchCode.value.replace(/^\s*```javascript\s*|```$/g, '').trim();
 
@@ -60,8 +56,6 @@ const sketch = (p) => {
     console.log(sketchCode);
     sketchCodeGlobal.value = sketchCode;
     sketchCodeNR = sketchCode;
-
-
   };
 };
 
@@ -73,10 +67,9 @@ isHidden.value = false;
 
 
 
+
+
 function reGenerateSketch(sketchCode){
-
-
-
 
 // Define the p5 sketch function
 const sketch = (p) => {
@@ -104,6 +97,7 @@ clearP5();
 // Remove the "hidden" class by setting isHidden to false
 isHidden.value = false;
 }
+
 
 
 
