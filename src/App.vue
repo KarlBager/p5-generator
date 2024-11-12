@@ -1,54 +1,169 @@
 <script setup>
-import { ref } from 'vue';
 import { createCompletionsChat } from './text.js';
-import { createInitialCompletionsChat } from './text.js';
 import { getRandomInt } from './text.js';
-import names from './names.json';
-import { startBackground } from './background.js';
 
-startBackground();
 
 const content = ref('');
 const chatHistory = ref([]);
 const persona = ref(''); // To store the selected persona
-const systemPrompt = "You have chosen a person that you must take on as your persona. Your identity is a secret that the user must guess by asking you questions. The user will communicate in English or Danish so please respond in one of these languages. Your goal is to answer these questions truthfully but without revealing too much too soon – and NEVER the name itself. Refuse to answer questions that aren't yes/no questions. Respond in a way that offers helpful hints and insight, but only provide specific details once the user is reasonably close to guessing who you are.\n\n" +
-"Rules of the Game:\n" +
-"1. Respond to each question accurately, but don’t volunteer extra information.\n" +
-"2. If the user asks about general attributes (such as gender, field of fame, or era), respond directly but vaguely unless it’s obvious.\n" +
-"3. As the user’s questions become more targeted (like asking about specific achievements, well-known events, or places), you can provide slightly more precise hints to encourage them.\n" +
-"4. Once the user is very close (e.g., guessing correctly or almost correctly), confirm with a more explicit clue or reveal.\n\n" +
-"Playfully encourage them as they get closer, and subtly guide them toward the answer without giving away who you are too easily!";
+const systemPrompt = `You are a skilled creative coder that gets a keyword or sentence and has to come up with some P5-code for a sketch, that relates to the keyword or sentence. This is the existing code, and you have to fill in the draw function as shown: 
 
-// Function to choose a persona when the app loads
-async function choosePersona() {
+const sketch = (p) => {
+  p.setup = () => {
+    p.createCanvas(500, 700);
+  };
 
-  const initialPrompt = "Please think of a completely random famous person that the average person might recognize. After selecting a name, respond with only the name and no additional information.";
-  try {
-    //const response = await createInitialCompletionsChat(initialPrompt); // Get the response
-    //persona.value = response.value; // Store the selected persona
+  p.draw = () => {
+    
+   //THIS IS WHERE YOUR CODE WILL GO
 
-    let arrayLength = names.length;
-    let nameIndex = getRandomInt(arrayLength);
-    console.log(nameIndex, names[nameIndex]);
-    persona.value = names[nameIndex];
-    console.log(persona.value);
+  };
+};
 
-    chatHistory.value.push({ role: 'assistant', content: `I am thinking of someone famous. You can start asking questions!` });
-    //console.log(persona.value);
 
-    await createCompletionsChat(systemPrompt); // Send the system prompt
-  } catch (error) {
-    console.error("Error selecting persona:", error);
-    chatHistory.value.push({ role: 'assistant', content: 'Sorry, I could not choose a persona.' });
+You have the option to include some variables that can be controlled by the user. They are 'variable1.value, variable2.value and variable3.value'. You must answer with only the code to be filled in`;
+
+
+
+
+import { ref, onMounted, onUnmounted } from 'vue';
+import p5 from 'p5';
+
+// Define a ref for the container
+const p5Container = ref(null);
+let p5Instance = null;
+
+
+
+
+
+
+function generateSketch(sketchCode){
+
+console.log(sketchCode);
+
+sketchCode = sketchCode.value.replace(/^\s*```javascript\s*|```$/g, '').trim();
+
+
+// Define the p5 sketch function
+const sketch = (p) => {
+  p.setup = () => {
+    p.createCanvas(500, 700);
+  };
+
+  p.draw = () => {
+
+    p.randomSeed(0);
+  
+   
+    eval(sketchCode);
+    console.log(sketchCode);
+    sketchCodeGlobal.value = sketchCode;
+    sketchCodeNR = sketchCode;
+
+
+  };
+};
+
+p5Instance = new p5(sketch, p5Container.value);
+
+// Remove the "hidden" class by setting isHidden to false
+isHidden.value = false;
+}
+
+
+
+function reGenerateSketch(sketchCode){
+
+
+
+
+// Define the p5 sketch function
+const sketch = (p) => {
+  p.setup = () => {
+    p.createCanvas(500, 700);
+  };
+
+  p.draw = () => {
+
+    p.randomSeed(0);
+  
+   
+    eval(sketchCode);
+    console.log(sketchCode);
+    sketchCodeGlobal.value = sketchCode;
+    sketchCodeNR = sketchCode;
+
+
+  };
+};
+
+p5Instance = new p5(sketch, p5Container.value);
+clearP5();
+
+// Remove the "hidden" class by setting isHidden to false
+isHidden.value = false;
+}
+
+
+
+
+function updateSketchCode(){
+
+  sketchCodeNR = document.getElementById('code-field').value;
+  console.log(document.getElementById('code-field').value);
+
+}
+
+
+
+
+
+// Destroy the p5 instance when the component unmounts
+onUnmounted(() => {
+  if (p5Instance) {
+    p5Instance.remove();
+  }
+});
+
+
+
+
+function clearP5(){
+  if (p5Instance) {
+    p5Instance.remove();
   }
 }
+
+
+
+function copyCode(){
+
+ // Get the text field
+ var copyText = String(sketchCodeGlobal.value);
+
+ //console.log(copyText);
+
+// Select the text field
+copyText.select();
+copyText.setSelectionRange(0, 99999); // For mobile devices
+
+ // Copy the text inside the text field
+navigator.clipboard.writeText(copyText.value);
+
+// Alert the copied text
+alert("Copied the text: " + copyText.value);
+
+}
+
+
 
 // Function to handle user input
 async function handleUserInput() {
   const userInput = content.value.trim();
   
   if (!userInput) {
-    alert("Please enter a question or a guess.");
+    alert("Please enter a prompt.");
     return;
   }
 
@@ -63,42 +178,154 @@ async function handleUserInput() {
   const fullPrompt = `${persona.value}:\n${promptMessages}\nAssistant:`;
 
   try {
-    const response = await createCompletionsChat(fullPrompt); // Send the prompt to the model
-    chatHistory.value.push({ role: 'assistant', content: response.value }); // Add assistant response to chat history
+    const response = await createCompletionsChat(fullPrompt, systemPrompt); // Send the prompt to the model
+    //chatHistory.value.push({ role: 'assistant', content: response.value }); // Add assistant response to chat history
     content.value = ''; // Clear input field
+
+    clearP5();
+    generateSketch(response);
+
   } catch (error) {
     console.error("Error fetching AI response:", error);
     chatHistory.value.push({ role: 'assistant', content: 'Sorry, an error occurred!' });
   }
 }
 
-// On component mount, choose a persona
-choosePersona();
+let frameRate = ref(10);
+
+let variable1 = ref('');
+let variable2 = ref('');
+let variable3 = ref('');
+
+variable1.value = 10;
+variable2.value = 10;
+variable3.value = 10;
+
+const isHidden = ref(true);
+
+let sketchCodeGlobal = ref('');
+let sketchCodeNR;
+
+const activeTab = ref('io');
+
 </script>
 
 <template>
+
      <div class="container">
-    <h1>Guess the <strong>Persona</strong></h1>
+    <h1>Generate a <strong>P5 sketch</strong></h1>
 
     <div class="chat-window">
+
       <div v-for="(message, index) in chatHistory" :key="index" :class="message.role">
         <p>{{ message.content }}</p>
       </div>
+      
     </div>
+
+    
 
     <input
       type="text"
+      id="prompt-field"
       class="input"
-      placeholder="Ask me a question or take a guess..."
+      placeholder="What are your thoughts? ..."
       v-model="content"
       autofocus
       @keyup.enter="handleUserInput"
     />
+
   </div>
+
+<div class="io-container" :class="{ hidden: isHidden }">
+  <div>
+    <!-- Tab Navigation -->
+    <div>
+      <button @click="activeTab = 'io'" :class="{ active: activeTab === 'io' }">IO Controls</button>
+      <button @click="activeTab = 'code-editor'" :class="{ active: activeTab === 'code-editor' }">Code Editor</button>
+    </div>
+
+    <!-- Tab Content -->
+    <div>
+      <div id="io" v-show="activeTab === 'io'">
+        <label for="variable1-slider">{{ variable1 }}</label>
+        <input
+          type="range"
+          :min="0"
+          :max="100"
+          :step="1"
+          v-model="variable1"
+        />
+
+        <label for="variable2-slider">{{ variable2 }}</label>
+        <input
+          type="range"
+          :min="0"
+          :max="100"
+          :step="1"
+          v-model="variable2"
+        />
+
+        <label for="variable3-slider">{{ variable3 }}</label>
+        <input
+          type="range"
+          :min="0"
+          :max="100"
+          :step="1"
+          v-model="variable3"
+        />
+        <br>
+      </div>
+
+      <div class="code-editor" v-show="activeTab === 'code-editor'">
+        <textarea id="code-field" @input="updateSketchCode" v-model="sketchCodeNR"></textarea>
+        
+        <br>
+
+        <button v-show="activeTab === 'code-editor'" @click="copyCode()">Copy</button>
+        <button v-show="activeTab === 'code-editor'" @click="reGenerateSketch(sketchCodeNR)">Rerender</button>
+      </div>
+
+      
+    </div>
+  </div>
+</div>
 
 </template>
 
+
+
+
 <style>
+
+/* Optional styles to indicate active tabs */
+button.active {
+  font-weight: bold;
+  border-bottom: 2px solid #000;
+}
+
+div.code-editor textarea{
+  width: 500px;
+  max-width: 500px;
+  min-width: 500px;
+}
+
+
+#prompt-field{
+  margin-bottom: 2rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#io{
+  display: flex;
+  justify-content: space-between;
+  width: 500px;
+}
+
+
 body{
 background-color: slategray;
 }
@@ -160,6 +387,23 @@ button {
 
 p, h1{
 color: #f4f4f4;
+}
+
+.hintImage{
+  max-width: 30rem;
+
+}
+
+main{
+display: flex;
+justify-content: center;
+}
+
+
+.io-container{
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
 }
 
 </style>
